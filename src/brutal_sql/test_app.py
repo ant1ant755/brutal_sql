@@ -23,6 +23,7 @@ def test_landing_page_shows_title(landing_page: AppTest) -> None:
 
 
 def test_landing_page_shows_tagline(landing_page: AppTest) -> None:
+    assert len(landing_page.caption) == 1, "landing page should show one tagline"
     assert landing_page.caption[0].value == APP_TAGLINE
 
 

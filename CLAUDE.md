@@ -15,6 +15,7 @@ Text-to-SQL by brute-force generation of SQL, guided by a graph ontology of the 
 ```bash
 mamba activate brutal_sql            # activate env
 poetry install                       # install deps
+cp .env.example .env                 # once: then set real values in .env
 docker compose up -d                 # start local Postgres
 poetry run pytest                    # run all tests
 poetry run black . && poetry run isort .   # format
