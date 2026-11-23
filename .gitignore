@@ -221,3 +221,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# UI test artifacts (agent-browser screenshots and videos)
+screenshots/
+
+# Private keys
+*.pem
+*.key

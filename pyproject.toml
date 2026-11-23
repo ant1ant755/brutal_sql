@@ -1,0 +1,39 @@
+[project]
+name = "brutal-sql"
+version = "0.1.0"
+description = "Text-to-SQL by brute-force generation of SQL, guided by a graph ontology of the database schema."
+readme = "README.md"
+requires-python = ">=3.12,<4.0"
+dependencies = [
+    "streamlit (>=1.67.0,<2.0.0)",
+    "sqlalchemy (>=2.1.9,<3.0.0)",
+    "psycopg[binary] (>=3.3.9,<4.0.0)"
+]
+
+[tool.poetry]
+packages = [{ include = "brutal_sql", from = "src" }]
+
+[tool.black]
+line-length = 88
+target-version = ["py312"]
+
+[tool.isort]
+profile = "black"
+line_length = 88
+src_paths = ["src", "tests"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[dependency-groups]
+dev = [
+    "pytest (>=9.2.0,<10.0.0)",
+    "black (>=26.10.1,<27.0.0)",
+    "isort (>=9.0.2,<10.0.0)",
+    "flake8 (>=7.5.0,<8.0.0)"
+]
