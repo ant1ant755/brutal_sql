@@ -85,6 +85,10 @@ Screenshots and videos go in `screenshots/` (gitignored).
 - Type hints on all function signatures. Docstrings on public functions and classes.
 - black (line length 88), isort (profile `black`), flake8 must pass with no warnings.
 - No new dependencies without asking first.
+- **Pin every dependency to an exact version** in `pyproject.toml`, e.g. `"streamlit (==1.67.0)"`,
+  in both the main and dev groups. No ranges: no `^`, `~`, `~=`, `>=`, `<`, or wildcards. When adding
+  an approved dependency, use `poetry add "<package>==<version>"` (or `--group dev`). Enforced by
+  `test_all_dependencies_are_pinned_exactly` in `test_project_config.py`.
 - Never bump, upgrade or change the version of an existing dependency (including `poetry update`
   or editing version constraints in `pyproject.toml`) without asking first.
 
