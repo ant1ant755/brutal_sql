@@ -68,11 +68,14 @@ Screenshots and videos go in `screenshots/` (gitignored).
 4. Implement on a branch named `<ticket-id>-short-description`. Every commit message starts with the
    ticket ID, e.g. `BRU-12: extract foreign keys from schema`.
 5. Before declaring done: run format, lint, and the full test suite. Check every success criterion in the ticket and report on each one.
-6. If the ticket touches the Streamlit app, run the `streamlit-ui-test` skill and report pass/fail
-   with screenshots. **Attach the screen recording (`.webm`) and/or screenshots (`.png`) to the
-   Linear ticket** with the Linear MCP tools: `prepare_attachment_upload` → `curl -X PUT` the file
-   with the returned signed headers (within 60 s) → `create_attachment_from_upload`. Do one file
-   at a time.
+6. **After the code is complete, re-run every Streamlit page in a real browser** (all pages, not
+   only the ones the ticket changed) with the `streamlit-ui-test` skill, and record a screen
+   recording (`.webm`) of each page working. Report pass/fail per page with screenshots. Do this on
+   every ticket, and again after any later code change to the ticket, so the recording always
+   matches the final code. **Upload the fresh recording(s) and screenshots to the Linear ticket**
+   with the Linear MCP tools: `prepare_attachment_upload` → `curl -X PUT` the file with the
+   returned signed headers (within 60 s) → `create_attachment_from_upload`. Do one file at a time,
+   and put the short commit hash in the attachment title so reviewers know which code it shows.
 7. Run the `python-code-review` and `secrets-review` skills on the diff before committing.
    The `.githooks/pre-commit` hook also runs `gitleaks` on staged changes and blocks the commit
    if it finds a secret. Never bypass it with `--no-verify`.
