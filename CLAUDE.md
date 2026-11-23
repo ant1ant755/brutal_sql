@@ -12,10 +12,21 @@ Text-to-SQL by brute-force generation of SQL, guided by a graph ontology of the 
 - Browser UI checks: `agent-browser` CLI (see the `streamlit-ui-test` skill)
 
 ## Commands
+
+### One-time setup
+```bash
+mamba create -n brutal_sql python=3.12 poetry   # env with Python 3.12 + poetry
+mamba activate brutal_sql                       # always activate before poetry commands
+poetry install                                  # installs into this env (poetry.toml: no separate venv)
+cp .env.example .env                            # then set real values in .env
+```
+`poetry.toml` sets `virtualenvs.create = false`, so poetry installs into whichever Python is
+active. Always `mamba activate brutal_sql` first, or dependencies land in the base environment.
+
+### Everyday
 ```bash
 mamba activate brutal_sql            # activate env
 poetry install                       # install deps
-cp .env.example .env                 # once: then set real values in .env
 docker compose up -d                 # start local Postgres
 poetry run pytest                    # run all tests
 poetry run black . && poetry run isort .   # format
