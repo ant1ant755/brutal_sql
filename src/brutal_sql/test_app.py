@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 from streamlit.testing.v1 import AppTest
 
+from brutal_sql import app
 from brutal_sql.app import APP_TAGLINE, APP_TITLE
 
 APP_PATH = Path(__file__).with_name("app.py")
@@ -36,7 +37,17 @@ def test_landing_page_raises_no_exceptions(landing_page: AppTest) -> None:
     assert len(landing_page.error) == 0
 
 
-def test_missing_app_file_fails_to_load() -> None:
-    missing_path = APP_PATH.with_name("does_not_exist.py")
-    with pytest.raises(FileNotFoundError):
-        AppTest.from_file(str(missing_path))
+def test_landing_page_sets_browser_tab_title(monkeypatch: pytest.MonkeyPatch) -> None:
+    page_config_calls: list[dict] = []
+    monkeypatch.setattr(
+        app.st, "set_page_config", lambda **kwargs: page_config_calls.append(kwargs)
+    )
+    app.render_landing_page()
+    assert len(page_config_calls) == 1
+    assert page_config_calls[0]["page_title"] == APP_TITLE
+
+
+def test_landing_page_rerun_does_not_duplicate_content(landing_page: AppTest) -> None:
+    rerun_page = landing_page.run()
+    assert len(rerun_page.title) == 1
+    assert len(rerun_page.caption) == 1

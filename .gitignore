@@ -228,3 +228,8 @@ screenshots/
 # Private keys
 *.pem
 *.key
+
+# Local machine / editor config (never commit)
+.DS_Store
+.claude/settings.local.json
+.mcp.json
