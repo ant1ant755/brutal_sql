@@ -12,6 +12,8 @@ dependencies = [
 
 [tool.poetry]
 packages = [{ include = "brutal_sql", from = "src" }]
+# Tests live next to their code; keep them out of built packages.
+exclude = ["src/**/test_*.py"]
 
 [tool.black]
 line-length = 88
@@ -20,10 +22,10 @@ target-version = ["py312"]
 [tool.isort]
 profile = "black"
 line_length = 88
-src_paths = ["src", "tests"]
+src_paths = ["src", "."]
 
 [tool.pytest.ini_options]
-testpaths = ["tests"]
+testpaths = ["src", "test_project_config.py"]
 pythonpath = ["src"]
 
 [build-system]

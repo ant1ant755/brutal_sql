@@ -7,7 +7,7 @@ from streamlit.testing.v1 import AppTest
 
 from brutal_sql.app import APP_TAGLINE, APP_TITLE
 
-APP_PATH = Path(__file__).parents[2] / "src" / "brutal_sql" / "app.py"
+APP_PATH = Path(__file__).with_name("app.py")
 
 
 @pytest.fixture

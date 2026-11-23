@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-PYPROJECT_PATH = Path(__file__).parents[1] / "pyproject.toml"
+PYPROJECT_PATH = Path(__file__).with_name("pyproject.toml")
 
 
 def read_package_names(requirements: list[str]) -> set[str]:

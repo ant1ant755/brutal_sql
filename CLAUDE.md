@@ -42,7 +42,9 @@ Screenshots and videos go in `screenshots/` (gitignored).
 
 ## Project layout
 - `src/brutal_sql/` — application code
-- `tests/` — mirrors `src/` structure (`tests/test_<module>.py`)
+- Tests live **next to the code they test**, in the same folder: `src/brutal_sql/<module>.py` →
+  `src/brutal_sql/test_<module>.py`. There is no `tests/` folder. Project-level tests (e.g. on
+  `pyproject.toml`) sit at the repo root. Test files are excluded from the built package.
 - Secrets come from environment variables / `.env` (never committed). `.env.example` documents the keys.
 
 ## Workflow (every task)
@@ -69,7 +71,8 @@ Screenshots and videos go in `screenshots/` (gitignored).
 - Every public function gets **positive and negative tests** (valid input → expected result; invalid input → expected error or behaviour).
 - **Never modify existing tests while building a feature.** Add new tests only.
 - If an existing test fails: explain why it broke, then propose a fix to the **code**. If you believe the test itself is wrong, stop and ask me. Do not edit it yourself.
-- UI behaviour gets repeatable tests with Streamlit `AppTest` in `tests/ui/`. agent-browser checks are
+- UI behaviour gets repeatable tests with Streamlit `AppTest` in the `test_<module>.py` next to the
+  UI module (e.g. `src/brutal_sql/test_app.py`). agent-browser checks are
   extra verification and don't replace these tests.
 - Tests that need Postgres use the Docker Compose instance. Unit tests must not require a live database.
 
