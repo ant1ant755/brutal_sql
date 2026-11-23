@@ -1,6 +1,7 @@
 """Checks that pyproject.toml declares the expected dependency layout."""
 
 import re
+import sys
 import tomllib
 from pathlib import Path
 
@@ -81,6 +82,14 @@ def test_is_pinned_exactly_accepts_exact_pins(requirement: str) -> None:
 )
 def test_is_pinned_exactly_rejects_ranges(requirement: str) -> None:
     assert not is_pinned_exactly(requirement)
+
+
+def test_python_is_pegged_to_3_12(pyproject: dict) -> None:
+    assert pyproject["project"]["requires-python"] == ">=3.12,<3.13"
+
+
+def test_running_python_is_3_12() -> None:
+    assert sys.version_info[:2] == (3, 12)
 
 
 def test_lock_file_exists() -> None:

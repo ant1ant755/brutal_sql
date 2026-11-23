@@ -3,7 +3,7 @@ name = "brutal-sql"
 version = "0.1.0"
 description = "Text-to-SQL by brute-force generation of SQL, guided by a graph ontology of the database schema."
 readme = "README.md"
-requires-python = ">=3.12,<4.0"
+requires-python = ">=3.12,<3.13"
 dependencies = [
     "streamlit (==1.67.0)",
     "sqlalchemy (==2.1.9)",

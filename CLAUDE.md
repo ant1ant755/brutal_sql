@@ -3,7 +3,8 @@
 Text-to-SQL by brute-force generation of SQL, guided by a graph ontology of the database schema.
 
 ## Stack
-- Python 3.12, environment managed with **mamba**, dependencies with **poetry**
+- Python **3.12 only** (`requires-python = ">=3.12,<3.13"`), environment managed with **mamba**,
+  dependencies with **poetry**
 - UI: **Streamlit**
 - Database: **PostgreSQL** (local instance via Docker Compose)
 - Schema introspection: SQLAlchemy `inspect()` over psycopg 3
@@ -88,6 +89,8 @@ Screenshots and videos go in `screenshots/` (gitignored).
 - Type hints on all function signatures. Docstrings on public functions and classes.
 - black (line length 88), isort (profile `black`), flake8 must pass with no warnings.
 - No new dependencies without asking first.
+- **Python is pegged to 3.12** (`requires-python = ">=3.12,<3.13"`, mamba env `python=3.12`). Don't
+  widen or change it without asking. Enforced by `test_python_is_pegged_to_3_12`.
 - **Pin every dependency to an exact version** in `pyproject.toml`, e.g. `"streamlit (==1.67.0)"`,
   in both the main and dev groups. No ranges: no `^`, `~`, `~=`, `>=`, `<`, or wildcards. When adding
   an approved dependency, use `poetry add "<package>==<version>"` (or `--group dev`). Enforced by
