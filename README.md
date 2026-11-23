@@ -11,7 +11,12 @@ mamba create -n brutal_sql python=3.12 poetry   # env with Python 3.12 + poetry
 mamba activate brutal_sql                       # always activate before poetry commands
 poetry install                                  # installs into this env (poetry.toml: no separate venv)
 cp .env.example .env                            # then set real values in .env
+brew install gitleaks                           # secret scanner used by the pre-commit hook
+git config core.hooksPath .githooks             # enable the repo's pre-commit hook
 ```
+
+The pre-commit hook (`.githooks/pre-commit`) runs `gitleaks` on staged changes and blocks the
+commit if it finds a secret.
 
 > **Note:** `poetry.toml` sets `virtualenvs.create = false`, so poetry installs into whichever
 > Python is active. Always run `mamba activate brutal_sql` first, or dependencies land in the

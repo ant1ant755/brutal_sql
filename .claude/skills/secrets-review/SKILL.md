@@ -8,8 +8,8 @@ description: Check staged changes, the diff, and git history for leaked credenti
 ## Scan
 1. Staged and unstaged changes: `git diff --cached` and `git diff`.
 2. Branch commits not yet on main: `git log -p main..HEAD`.
-3. If available, run `gitleaks detect --source . --verbose` (or `detect-secrets scan`). If neither is
-   installed, say so and suggest adding one as a pre-commit hook. Do not install it without asking.
+3. Run `gitleaks git --redact -v .` (history) and `gitleaks git --pre-commit --staged --redact -v` (staged).
+   gitleaks is also enforced by `.githooks/pre-commit`. If gitleaks is missing (`brew install gitleaks`), say so.
 
 ## Look for
 - Connection strings with embedded passwords (`postgresql://user:pass@...`)

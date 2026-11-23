@@ -19,6 +19,8 @@ mamba create -n brutal_sql python=3.12 poetry   # env with Python 3.12 + poetry
 mamba activate brutal_sql                       # always activate before poetry commands
 poetry install                                  # installs into this env (poetry.toml: no separate venv)
 cp .env.example .env                            # then set real values in .env
+brew install gitleaks                           # secret scanner used by the pre-commit hook
+git config core.hooksPath .githooks             # enable the repo's pre-commit hook
 ```
 `poetry.toml` sets `virtualenvs.create = false`, so poetry installs into whichever Python is
 active. Always `mamba activate brutal_sql` first, or dependencies land in the base environment.
@@ -67,8 +69,15 @@ Screenshots and videos go in `screenshots/` (gitignored).
    ticket ID, e.g. `BRU-12: extract foreign keys from schema`.
 5. Before declaring done: run format, lint, and the full test suite. Check every success criterion in the ticket and report on each one.
 6. If the ticket touches the Streamlit app, run the `streamlit-ui-test` skill and report pass/fail
-   with screenshots.
+   with screenshots. **Attach the screen recording (`.webm`) and/or screenshots (`.png`) to the
+   Linear ticket** with the Linear MCP tools: `prepare_attachment_upload` → `curl -X PUT` the file
+   with the returned signed headers (within 60 s) → `create_attachment_from_upload`. Do one file
+   at a time.
 7. Run the `python-code-review` and `secrets-review` skills on the diff before committing.
+   The `.githooks/pre-commit` hook also runs `gitleaks` on staged changes and blocks the commit
+   if it finds a secret. Never bypass it with `--no-verify`.
+8. Push the branch and open the PR with the `gh` CLI using the GitHub account **ant1ant755**
+   (`gh auth switch --user ant1ant755` if another account is active).
 
 ## Code rules
 - Max **300 lines per module**, max **20 lines per function** (body, excluding docstring). Split if over.
