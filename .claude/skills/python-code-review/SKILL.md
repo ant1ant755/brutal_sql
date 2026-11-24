@@ -1,6 +1,6 @@
 ---
 name: python-code-review
-description: Review Python changes in this repo against project standards. Use before committing, after finishing a ticket, or when asked to review Python code.
+description: Review Python changes in this repo against project standards. Use when the code for a ticket is complete (all changes made, before declaring the ticket done and before each commit), or when asked to review Python code.
 ---
 
 # Python code review
