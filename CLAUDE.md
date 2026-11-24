@@ -87,6 +87,13 @@ Screenshots and videos go in `screenshots/` (gitignored).
 - Max **300 lines per module**, max **20 lines per function** (body, excluding docstring). Split if over.
 - Names read like English: `fetch_foreign_keys(schema)`, `build_relationship_graph(tables)`, `is_join_path_valid(...)`. No abbreviations like `tbl`, `fk_lst`, `proc()`.
 - Type hints on all function signatures. Docstrings on public functions and classes.
+- **Never catch an exception and do nothing.** No bare `except: pass`, no silent fallback values.
+  Re-raise (wrapping is fine, e.g. `raise ProcessingError(...) from error`), or at the very least
+  log it with the standard `logging` module (`logger = logging.getLogger(__name__)`). Follow the
+  credentials rule under "Never" when logging.
+- **If you add code that catches an exception and only logs it** (doesn't re-raise), tell me
+  in your report for that task: list each place as `file:line`, what is caught and why it's
+  safe to continue.
 - black (line length 88), isort (profile `black`), flake8 must pass with no warnings.
 - No new dependencies without asking first.
 - **Python is pegged to 3.12** (`requires-python = ">=3.12,<3.13"`, mamba env `python=3.12`). Don't
@@ -109,5 +116,11 @@ Screenshots and videos go in `screenshots/` (gitignored).
 
 ## Never
 - Never commit `.env`, credentials, connection strings with passwords, or tokens.
+- Never log, print or display database **usernames or passwords**. This covers log output,
+  exception and error messages, `repr`s, test output and assertion messages, JSON snapshots, the
+  Streamlit UI, screenshots and recordings. When an error must name a database, show only
+  host, port and database name, never a URL with credentials (not even with the password masked).
+  Mask credentials that appear inside driver error text before re-raising. Give tests that check
+  this a custom assertion message, so a failing assertion doesn't print the secret.
 - Never run destructive SQL (`DROP`, `TRUNCATE`, `DELETE`) against any database other than the local test container.
 - Never push to `main` directly.
