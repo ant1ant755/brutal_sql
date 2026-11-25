@@ -117,6 +117,9 @@ Screenshots and videos go in `screenshots/` (gitignored).
   UI module (e.g. `src/brutal_sql/test_app.py`). agent-browser checks are
   extra verification and don't replace these tests.
 - Tests that need Postgres use the Docker Compose instance. Unit tests must not require a live database.
+- **Tests are never skipped.** No `pytest.skip`, `skipif`, `xfail` or skip-on-missing-service
+  logic. If the Docker Postgres isn't running, the Postgres tests must fail, not skip. Start it
+  with `docker compose up -d` before running the suite.
 
 ## Never
 - Never commit `.env`, credentials, connection strings with passwords, or tokens.
