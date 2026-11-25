@@ -5,6 +5,8 @@ Run with: ``poetry run streamlit run src/brutal_sql/app.py``
 
 import streamlit as st
 
+from brutal_sql.logging_config import configure_logging
+
 APP_TITLE = "Brutal SQL"
 APP_TAGLINE = (
     "Text-to-SQL by brute-force generation, "
@@ -21,6 +23,7 @@ def render_landing_page() -> None:
 
 def main() -> None:
     """Start the Brutal SQL Streamlit app."""
+    configure_logging()
     render_landing_page()
 
 

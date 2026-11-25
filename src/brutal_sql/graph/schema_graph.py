@@ -82,6 +82,19 @@ class Graph:
         """All nodes in the order they were added."""
         return list(self._nodes.values())
 
+    def to_json(self) -> str:
+        """Return the graph as JSON text; Graph.from_json reverses it."""
+        from brutal_sql.graph.serialization import graph_to_json
+
+        return graph_to_json(self)
+
+    @classmethod
+    def from_json(cls, text: str) -> "Graph":
+        """Rebuild a graph from to_json output; raise GraphError if invalid."""
+        from brutal_sql.graph.serialization import graph_from_json
+
+        return graph_from_json(text)
+
     def _require_new_node(self, node: EntityNode) -> None:
         """Reject non-nodes and names already in the graph."""
         if not isinstance(node, EntityNode):

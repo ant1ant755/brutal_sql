@@ -13,7 +13,7 @@ dependencies = [
 [tool.poetry]
 packages = [{ include = "brutal_sql", from = "src" }]
 # Tests live next to their code; keep them out of built packages.
-exclude = ["src/**/test_*.py"]
+exclude = ["src/**/test_*.py", "src/**/conftest.py"]
 
 [tool.black]
 line-length = 88
@@ -27,6 +27,9 @@ src_paths = ["src", "."]
 [tool.pytest.ini_options]
 testpaths = ["src", "test_project_config.py"]
 pythonpath = ["src"]
+markers = [
+    "postgres: needs the Docker Compose Postgres (docker compose up -d); never skipped",
+]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]

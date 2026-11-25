@@ -10,6 +10,12 @@ from brutal_sql.graph.errors import (
     NodeNotFoundError,
 )
 from brutal_sql.graph.schema_graph import Graph, JoinStep
+from brutal_sql.graph.serialization import (
+    graph_from_dict,
+    graph_from_json,
+    graph_to_dict,
+    graph_to_json,
+)
 
 __all__ = [
     "AttributeNotFoundError",
@@ -24,4 +30,8 @@ __all__ = [
     "GraphError",
     "JoinStep",
     "NodeNotFoundError",
+    "graph_from_dict",
+    "graph_from_json",
+    "graph_to_dict",
+    "graph_to_json",
 ]
