@@ -8,7 +8,8 @@ Text-to-SQL by brute-force generation of SQL, guided by a graph ontology of the 
 - UI: **Streamlit**
 - Database: **PostgreSQL** (local instance via Docker Compose)
 - Schema introspection: SQLAlchemy `inspect()` over psycopg 3
-- Graph ontology: in-memory `networkx` graph (no graph database). Rebuilt from the schema on demand.
+- Graph ontology: in-memory graph built from plain Python classes in `src/brutal_sql/graph`
+  (no `networkx`, no graph database). Rebuilt from the schema on demand.
 - Tests: `pytest`, Streamlit `AppTest` (`streamlit.testing.v1`) for UI logic
 - Browser UI checks: `agent-browser` CLI (see the `streamlit-ui-test` skill)
 
