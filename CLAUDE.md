@@ -8,7 +8,8 @@ Text-to-SQL by brute-force generation of SQL, guided by a graph ontology of the 
 - UI: **Streamlit**
 - Database: **PostgreSQL** (local instance via Docker Compose)
 - Schema introspection: SQLAlchemy `inspect()` over psycopg 3
-- Graph ontology: in-memory `networkx` graph (no graph database). Rebuilt from the schema on demand.
+- Graph ontology: in-memory graph built from plain Python classes in `src/brutal_sql/graph`
+  (no `networkx`, no graph database). Rebuilt from the schema on demand.
 - Tests: `pytest`, Streamlit `AppTest` (`streamlit.testing.v1`) for UI logic
 - Browser UI checks: `agent-browser` CLI (see the `streamlit-ui-test` skill)
 
@@ -57,6 +58,9 @@ Screenshots and videos go in `screenshots/` (gitignored).
 
 ## Project layout
 - `src/brutal_sql/` — application code
+- `src/brutal_sql/graph/` — the schema graph (ontology): tables as entity nodes, columns as
+  attributes, foreign keys as forward/backward verb edges, and traversal utilities that list
+  the join paths used to build SQL. Plain Python classes, no database access.
 - Tests live **next to the code they test**, in the same folder: `src/brutal_sql/<module>.py` →
   `src/brutal_sql/test_<module>.py`. There is no `tests/` folder. Project-level tests (e.g. on
   `pyproject.toml`) sit at the repo root. Test files are excluded from the built package.
