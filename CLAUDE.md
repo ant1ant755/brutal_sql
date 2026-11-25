@@ -61,6 +61,9 @@ Screenshots and videos go in `screenshots/` (gitignored).
 - `src/brutal_sql/graph/` — the schema graph (ontology): tables as entity nodes, columns as
   attributes, foreign keys as forward/backward verb edges, and traversal utilities that list
   the join paths used to build SQL. Plain Python classes, no database access.
+- `src/brutal_sql/flow/` — end-to-end flows that tie the packages together: fetch a schema's
+  table metadata from the database (`db`) and convert it into the entity graph (`graph`),
+  e.g. `fetch_schema_graph(settings)`. Failures are wrapped in `ProcessingError`.
 - Tests live **next to the code they test**, in the same folder: `src/brutal_sql/<module>.py` →
   `src/brutal_sql/test_<module>.py`. There is no `tests/` folder. Project-level tests (e.g. on
   `pyproject.toml`) sit at the repo root. Test files are excluded from the built package.
