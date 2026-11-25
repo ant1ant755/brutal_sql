@@ -19,8 +19,6 @@ from brutal_sql.errors import ProcessingError, SanitizedDriverError
 
 logger = logging.getLogger(__name__)
 
-CONNECT_TIMEOUT_SECONDS = 5
-
 
 def create_database_engine(settings: ConnectionSettings) -> Engine:
     """Create an engine for the settings. Its repr names the user: never log it."""
@@ -28,7 +26,7 @@ def create_database_engine(settings: ConnectionSettings) -> Engine:
         raise ProcessingError("settings must be ConnectionSettings")
     return create_engine(
         settings.to_sqlalchemy_url(),
-        connect_args={"connect_timeout": CONNECT_TIMEOUT_SECONDS},
+        connect_args={"connect_timeout": settings.connect_timeout_seconds},
     )
 
 

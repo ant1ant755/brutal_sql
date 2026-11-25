@@ -161,3 +161,20 @@ def test_fetch_schema_tables_masks_credentials_in_driver_errors(
     assert not leaked, "error text leaks a username or password"
     assert "db.local:5432/shop" in str(caught.value)
     assert engine.disposed
+
+
+def test_create_database_engine_uses_settings_connect_timeout(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    captured: dict[str, Any] = {}
+
+    def recording_create_engine(url: Any, **options: Any) -> str:
+        captured.update(options)
+        return "engine"
+
+    monkeypatch.setattr(postgres_fetcher, "create_engine", recording_create_engine)
+    settings = ConnectionSettings(
+        "db.local", 5432, "shop", "public", connect_timeout_seconds=17
+    )
+    create_database_engine(settings)
+    assert captured["connect_args"] == {"connect_timeout": 17}

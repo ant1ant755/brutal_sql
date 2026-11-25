@@ -123,3 +123,10 @@ def test_wrong_schema_name_fails_without_leaking(
     settings = dataclasses.replace(shop_schema, schema_name="ant8_no_such_schema")
     error = assert_fails_without_leaking(settings, [str(shop_schema.password)], caplog)
     assert "ant8_no_such_schema" in str(error) and "not found" in str(error)
+
+
+def test_custom_connect_timeout_still_builds_shop_graph(
+    shop_schema: ConnectionSettings,
+) -> None:
+    settings = dataclasses.replace(shop_schema, connect_timeout_seconds=2)
+    assert_graph_matches_shop_schema(fetch_schema_graph(settings))

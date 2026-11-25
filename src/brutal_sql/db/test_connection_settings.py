@@ -109,3 +109,31 @@ def test_from_url_rejects_bad_urls_without_leaking(url: str) -> None:
 def test_from_url_rejects_non_string_url() -> None:
     with pytest.raises(ProcessingError):
         connection_settings_from_url(None, "public")  # type: ignore[arg-type]
+
+
+def test_settings_default_connect_timeout_is_five_seconds() -> None:
+    assert make_settings().connect_timeout_seconds == 5
+
+
+def test_settings_accept_custom_connect_timeout() -> None:
+    assert make_settings(connect_timeout_seconds=30).connect_timeout_seconds == 30
+
+
+@pytest.mark.parametrize("seconds", [0, -1, 2.5, "5", None, True])
+def test_settings_reject_invalid_connect_timeout(seconds: object) -> None:
+    with pytest.raises(ProcessingError, match="connect_timeout_seconds"):
+        make_settings(connect_timeout_seconds=seconds)
+
+
+def test_from_url_passes_connect_timeout() -> None:
+    settings = connection_settings_from_url(
+        URL_WITH_CREDENTIALS, "sales", connect_timeout_seconds=12
+    )
+    assert settings.connect_timeout_seconds == 12
+
+
+def test_from_url_rejects_invalid_connect_timeout() -> None:
+    with pytest.raises(ProcessingError, match="connect_timeout_seconds"):
+        connection_settings_from_url(
+            URL_WITH_CREDENTIALS, "sales", connect_timeout_seconds=0
+        )

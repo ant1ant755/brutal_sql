@@ -11,6 +11,7 @@ POSTGRES_DRIVER = "postgresql+psycopg"
 POSTGRES_BACKENDS = frozenset({"postgresql", "postgres"})
 DEFAULT_POSTGRES_PORT = 5432
 HIGHEST_PORT = 65535
+DEFAULT_CONNECT_TIMEOUT_SECONDS = 5
 
 
 def _require_text(value: object, field_name: str) -> None:
@@ -27,6 +28,14 @@ def _require_port(port: object) -> None:
         raise ProcessingError(f"port must be between 1 and {HIGHEST_PORT}")
 
 
+def _require_connect_timeout(seconds: object) -> None:
+    """Raise ProcessingError unless seconds is a positive integer."""
+    if isinstance(seconds, bool) or not isinstance(seconds, int) or seconds < 1:
+        raise ProcessingError(
+            f"connect_timeout_seconds must be a positive integer, got {seconds!r}"
+        )
+
+
 @dataclass(frozen=True)
 class ConnectionSettings:
     """Host, port, database and schema to read, plus credentials kept out of repr."""
@@ -37,12 +46,14 @@ class ConnectionSettings:
     schema_name: str
     username: str | None = field(default=None, repr=False)
     password: str | None = field(default=None, repr=False)
+    connect_timeout_seconds: int = DEFAULT_CONNECT_TIMEOUT_SECONDS
 
     def __post_init__(self) -> None:
         _require_text(self.host, "host")
         _require_port(self.port)
         _require_text(self.database, "database")
         _require_text(self.schema_name, "schema_name")
+        _require_connect_timeout(self.connect_timeout_seconds)
 
     def describe_database(self) -> str:
         """Return 'host:port/database', the only form allowed in messages."""
@@ -78,6 +89,7 @@ def connection_settings_from_url(
     schema_name: str,
     username: str | None = None,
     password: str | None = None,
+    connect_timeout_seconds: int = DEFAULT_CONNECT_TIMEOUT_SECONDS,
 ) -> ConnectionSettings:
     """Build settings from a Postgres URL; given credentials override the URL's."""
     parsed = _parse_url(url)
@@ -90,4 +102,5 @@ def connection_settings_from_url(
         schema_name=schema_name,
         username=username if username is not None else parsed.username,
         password=password if password is not None else parsed.password,
+        connect_timeout_seconds=connect_timeout_seconds,
     )
