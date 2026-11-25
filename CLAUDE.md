@@ -61,6 +61,10 @@ Screenshots and videos go in `screenshots/` (gitignored).
 - `src/brutal_sql/graph/` — the schema graph (ontology): tables as entity nodes, columns as
   attributes, foreign keys as forward/backward verb edges, and traversal utilities that list
   the join paths used to build SQL. Plain Python classes, no database access.
+- `src/brutal_sql/db/` — database access: `ConnectionSettings` (credentials kept out of
+  `repr` and messages), `mask_credentials` for driver error text, table metadata records,
+  and the Postgres fetcher that reads columns, primary keys, indexes and foreign keys of a
+  schema via SQLAlchemy `inspect()`.
 - `src/brutal_sql/flow/` — end-to-end flows that tie the packages together: fetch a schema's
   table metadata from the database (`db`) and convert it into the entity graph (`graph`),
   e.g. `fetch_schema_graph(settings)`. Failures are wrapped in `ProcessingError`.
