@@ -2,6 +2,7 @@
 
 from brutal_sql.flow.annotated_graph import build_annotated_graph
 from brutal_sql.flow.fetch_schema_graph import count_edges, fetch_schema_graph
+from brutal_sql.flow.join_trees import find_all_join_trees
 from brutal_sql.flow.schema_to_graph import (
     BACKWARD_VERB,
     FORWARD_VERB,
@@ -20,5 +21,6 @@ __all__ = [
     "convert_tables_to_graph",
     "count_edges",
     "fetch_schema_graph",
+    "find_all_join_trees",
     "readable_name_for",
 ]
