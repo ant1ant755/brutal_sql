@@ -9,6 +9,7 @@ from brutal_sql.graph.errors import (
     GraphError,
     NodeNotFoundError,
 )
+from brutal_sql.graph.mirror import MirrorSource, RowFilter
 from brutal_sql.graph.schema_graph import Graph, JoinStep
 from brutal_sql.graph.serialization import (
     graph_from_dict,
@@ -29,7 +30,9 @@ __all__ = [
     "Graph",
     "GraphError",
     "JoinStep",
+    "MirrorSource",
     "NodeNotFoundError",
+    "RowFilter",
     "graph_from_dict",
     "graph_from_json",
     "graph_to_dict",

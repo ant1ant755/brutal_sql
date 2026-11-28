@@ -5,10 +5,12 @@ from typing import Any
 
 from brutal_sql.graph.entity import Edge, EdgeType, EntityAttribute, EntityNode
 from brutal_sql.graph.errors import GraphError
+from brutal_sql.graph.mirror import MirrorSource, RowFilter
 from brutal_sql.graph.schema_graph import Graph
 
 FORMAT_VERSION = 1
 EDGE_TYPES = {edge_type.value: edge_type for edge_type in EdgeType}
+ROW_FILTERS = {row_filter.value: row_filter for row_filter in RowFilter}
 
 
 def graph_to_dict(graph: Graph) -> dict[str, Any]:
@@ -29,6 +31,20 @@ def _node_to_dict(node: EntityNode) -> dict[str, Any]:
             for attribute in node.attributes
         ],
         "edges": [_edge_to_dict(edge) for edge in node.edges],
+        "mirror_of": _mirror_to_dict(node.mirror_of),
+    }
+
+
+def _mirror_to_dict(source: MirrorSource | None) -> dict[str, Any] | None:
+    """Return a mirror's source as a plain dict, or None for an ordinary node."""
+    if source is None:
+        return None
+    return {
+        "physical_table": source.physical_table,
+        "referencing_column": source.referencing_column,
+        "referenced_column": source.referenced_column,
+        "column_mapping": [list(pair) for pair in source.column_mapping],
+        "row_filter": source.row_filter.value,
     }
 
 
@@ -63,7 +79,31 @@ def _node_from_dict(data: dict[str, Any]) -> EntityNode:
         for attribute in data["attributes"]
     ]
     edges = [_edge_from_dict(edge) for edge in data["edges"]]
-    return EntityNode(data["name"], attributes, edges)
+    mirror_of = _mirror_from_dict(data.get("mirror_of"))
+    return EntityNode(data["name"], attributes, edges, mirror_of)
+
+
+def _mirror_from_dict(data: dict[str, Any] | None) -> MirrorSource | None:
+    """Rebuild a mirror's source; None (or a missing key) means an ordinary node."""
+    if data is None:
+        return None
+    row_filter = ROW_FILTERS.get(data["row_filter"])
+    if row_filter is None:
+        raise GraphError(f"unknown row_filter {data['row_filter']!r}")
+    return MirrorSource(
+        data["physical_table"],
+        data["referencing_column"],
+        data["referenced_column"],
+        tuple(_pair_from_list(pair) for pair in data["column_mapping"]),
+        row_filter,
+    )
+
+
+def _pair_from_list(pair: object) -> tuple[object, ...]:
+    """Return a [mirror, physical] list as a tuple; raise GraphError otherwise."""
+    if not isinstance(pair, list):
+        raise GraphError(f"column_mapping entry must be a list, got {pair!r}")
+    return tuple(pair)
 
 
 def _edge_from_dict(data: dict[str, Any]) -> Edge:
