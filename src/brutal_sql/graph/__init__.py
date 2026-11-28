@@ -39,6 +39,7 @@ from brutal_sql.graph.serialization import (
     graph_to_dict,
     graph_to_json,
 )
+from brutal_sql.graph.spanning_trees import find_spanning_trees
 
 __all__ = [
     "AnnotationError",
@@ -70,6 +71,7 @@ __all__ = [
     "draft_annotations",
     "find_connected_table_sets",
     "find_ontology_problems",
+    "find_spanning_trees",
     "graph_from_dict",
     "graph_from_json",
     "graph_to_dict",
