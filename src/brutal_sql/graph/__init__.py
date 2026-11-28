@@ -23,6 +23,7 @@ from brutal_sql.graph.errors import (
     GraphError,
     NodeNotFoundError,
 )
+from brutal_sql.graph.join_tree import JoinTree, JoinTreeError, JoinType, TreeEdge
 from brutal_sql.graph.mirror import MirrorSource, RowFilter
 from brutal_sql.graph.ontology_validator import (
     PLACEHOLDER_VERBS,
@@ -51,6 +52,9 @@ __all__ = [
     "Graph",
     "GraphError",
     "JoinStep",
+    "JoinTree",
+    "JoinTreeError",
+    "JoinType",
     "MirrorSource",
     "NodeNotFoundError",
     "OntologyError",
@@ -58,6 +62,7 @@ __all__ = [
     "RowFilter",
     "TODO_MARKER",
     "TableType",
+    "TreeEdge",
     "annotations_from_json",
     "annotations_to_json",
     "apply_annotations",
