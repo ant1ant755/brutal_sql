@@ -11,6 +11,7 @@ from brutal_sql.graph.errors import (
     GraphError,
     NodeNotFoundError,
 )
+from brutal_sql.graph.mirror import require_mirror_columns
 
 DEFAULT_MAX_JOINS = 4
 
@@ -76,6 +77,7 @@ class Graph:
             self._nodes[node.name] = node
         for node in nodes:
             self._check_edge_targets(node)
+            self._check_mirror_source(node)
 
     @property
     def nodes(self) -> list[EntityNode]:
@@ -111,10 +113,19 @@ class Graph:
                 target = self.get_node(edge.target_table)
             _require_attribute(target, edge.target_table_field)
 
+    def _check_mirror_source(self, node: EntityNode) -> None:
+        """Require a mirror's physical table to be in the graph with its columns."""
+        if node.mirror_of is None:
+            return
+        physical = self.get_node(node.mirror_of.physical_table)
+        names = [attribute.name for attribute in physical.attributes]
+        require_mirror_columns(node.mirror_of, names)
+
     def add_node(self, node: EntityNode) -> None:
         """Add a node whose edges point only at nodes already in the graph."""
         self._require_new_node(node)
         self._check_edge_targets(node)
+        self._check_mirror_source(node)
         self._nodes[node.name] = node
 
     def get_node(self, table_name: str) -> EntityNode:

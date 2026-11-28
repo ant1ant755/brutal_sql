@@ -60,7 +60,9 @@ Screenshots and videos go in `screenshots/` (gitignored).
 - `src/brutal_sql/` — application code
 - `src/brutal_sql/graph/` — the schema graph (ontology): tables as entity nodes, columns as
   attributes, foreign keys as forward/backward verb edges, and traversal utilities that list
-  the join paths used to build SQL. Plain Python classes, no database access.
+  the join paths used to build SQL. Plain Python classes, no database access. A
+  self-referencing table (e.g. `employee.manager_id → employee.id`) gets a graph-only
+  **mirror** node (`managers`) whose `MirrorSource` says how to rebuild it as a derived table.
 - `src/brutal_sql/db/` — database access: `ConnectionSettings` (credentials kept out of
   `repr` and messages), `mask_credentials` for driver error text, table metadata records,
   and the Postgres fetcher that reads columns, primary keys, indexes and foreign keys of a

@@ -1,5 +1,6 @@
 """Turn table metadata read from a database into an entity graph."""
 
+import dataclasses
 import logging
 
 from brutal_sql.db.table_metadata import (
@@ -8,6 +9,7 @@ from brutal_sql.db.table_metadata import (
     TableMetadata,
 )
 from brutal_sql.errors import ProcessingError
+from brutal_sql.flow.self_reference import add_mirror_tables, is_self_referencing
 from brutal_sql.graph import EntityAttribute, EntityNode, Graph, GraphError
 
 logger = logging.getLogger(__name__)
@@ -41,8 +43,8 @@ def _skip_reason(
         # TODO: support foreign keys to tables in another schema.
         return f"it points at schema {foreign_key.referred_schema!r}"
     if foreign_key.referred_table == table.name:
-        # TODO: support self-referencing foreign keys (self joins), e.g.
-        # employees.manager_id -> employees.id.
+        # Self joins become mirror tables (see flow.self_reference), which
+        # convert_tables_to_graph adds instead of a self-loop edge.
         return "it references its own table (self join)"
     if foreign_key.is_composite:
         # TODO: support composite foreign keys with a multi-column edge.
@@ -74,14 +76,33 @@ def add_foreign_key_edges(graph: Graph, table: TableMetadata) -> int:
     return len(added)
 
 
+def without_self_references(table: TableMetadata, schema_name: str) -> TableMetadata:
+    """Return a copy of table without its self-referencing foreign keys.
+
+    Those become mirror tables, so they must not be warned about as skipped.
+    """
+    kept = tuple(
+        foreign_key
+        for foreign_key in table.foreign_keys
+        if not is_self_referencing(table, foreign_key, schema_name)
+    )
+    return dataclasses.replace(table, foreign_keys=kept)
+
+
 def convert_tables_to_graph(schema_name: str, tables: list[TableMetadata]) -> Graph:
-    """Build the entity graph of a schema from its tables' metadata."""
+    """Build the entity graph of a schema from its tables' metadata.
+
+    A self-referencing table also gets a graph-only mirror node; see
+    flow.self_reference. Raises ProcessingError if the graph is invalid.
+    """
     if not tables:
         raise ProcessingError(f"schema {schema_name!r} has no tables to convert")
     try:
         graph = Graph(schema_name, [build_entity_node(table) for table in tables])
         for table in tables:
-            add_foreign_key_edges(graph, table)
+            add_foreign_key_edges(graph, without_self_references(table, schema_name))
+        for table in tables:
+            add_mirror_tables(graph, table)
     except GraphError as error:
         raise ProcessingError(
             f"could not build the entity graph for schema {schema_name!r}: {error}"

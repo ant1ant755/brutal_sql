@@ -9,6 +9,7 @@ from brutal_sql.graph.errors import (
     EdgeNotFoundError,
     GraphError,
 )
+from brutal_sql.graph.mirror import MirrorSource
 
 
 def require_text(value: object, field_name: str) -> None:
@@ -61,15 +62,21 @@ class Edge:
 
 @dataclass
 class EntityNode:
-    """A table in the schema: its name, its attributes and its outgoing edges."""
+    """A table in the schema: its name, its attributes and its outgoing edges.
+
+    mirror_of is set on a mirror node, a graph-only copy of a self-referencing
+    table; it says how to rebuild the mirror from the physical table.
+    """
 
     name: str
     attributes: list[EntityAttribute]
     edges: list[Edge] = field(default_factory=list)
+    mirror_of: MirrorSource | None = None
 
     def __post_init__(self) -> None:
         require_text(self.name, "name")
         self._check_attributes()
+        self._check_mirror_of()
         initial_edges = list(self.edges)
         self.attributes = list(self.attributes)
         self.edges = []
@@ -86,6 +93,25 @@ class EntityNode:
         names = [attribute.name for attribute in self.attributes]
         if len(names) != len(set(names)):
             raise GraphError(f"entity {self.name!r} has duplicate attribute names")
+
+    def _check_mirror_of(self) -> None:
+        """Require mirror_of to be None or a MirrorSource matching the attributes."""
+        if self.mirror_of is None:
+            return
+        if not isinstance(self.mirror_of, MirrorSource):
+            raise GraphError(
+                f"mirror_of must be a MirrorSource, got {self.mirror_of!r}"
+            )
+        names = [attribute.name for attribute in self.attributes]
+        if self.mirror_of.mirror_columns != names:
+            raise GraphError(
+                f"mirror {self.name!r} column mapping does not match its attributes"
+            )
+
+    @property
+    def is_mirror(self) -> bool:
+        """True for a graph-only mirror of a self-referencing table."""
+        return self.mirror_of is not None
 
     def has_attribute(self, attribute_name: str) -> bool:
         """Return True if the entity has an attribute with this name."""

@@ -4,6 +4,7 @@ These tests are never skipped: if the container is down they fail.
 Start it with `docker compose up -d`.
 """
 
+import dataclasses
 import os
 from collections.abc import Iterator
 from pathlib import Path
@@ -89,5 +90,41 @@ def shop_schema(postgres_settings: ConnectionSettings) -> Iterator[ConnectionSet
         yield postgres_settings
         with engine.begin() as connection:
             connection.exec_driver_sql(SHOP_DDL[0])
+    finally:
+        engine.dispose()
+
+
+STAFF_SCHEMA = "ant9_staff"
+STAFF_DDL = [
+    f"DROP SCHEMA IF EXISTS {STAFF_SCHEMA} CASCADE",
+    f"CREATE SCHEMA {STAFF_SCHEMA}",
+    f"""CREATE TABLE {STAFF_SCHEMA}.department (
+        id serial PRIMARY KEY, title text NOT NULL)""",
+    f"""CREATE TABLE {STAFF_SCHEMA}.employee (
+        id integer PRIMARY KEY,
+        manager_id integer REFERENCES {STAFF_SCHEMA}.employee (id),
+        name text NOT NULL,
+        department_id integer REFERENCES {STAFF_SCHEMA}.department (id))""",
+    f"COMMENT ON COLUMN {STAFF_SCHEMA}.employee.name IS 'employee name'",
+    f"""INSERT INTO {STAFF_SCHEMA}.employee (id, manager_id, name) VALUES
+        (1, NULL, 'alice'), (2, 1, 'bob'), (3, 2, 'rom'), (4, 2, 'rogue')""",
+]
+
+
+@pytest.fixture(scope="session")
+def staff_schema(postgres_settings: ConnectionSettings) -> Iterator[ConnectionSettings]:
+    """Create the staff schema (department, self-referencing employee), then drop it.
+
+    Runs only against the local Docker test container.
+    """
+    settings = dataclasses.replace(postgres_settings, schema_name=STAFF_SCHEMA)
+    engine = create_engine(settings.to_sqlalchemy_url())
+    try:
+        with engine.begin() as connection:
+            for statement in STAFF_DDL:
+                connection.exec_driver_sql(statement)
+        yield settings
+        with engine.begin() as connection:
+            connection.exec_driver_sql(STAFF_DDL[0])
     finally:
         engine.dispose()
