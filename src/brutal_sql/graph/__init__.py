@@ -1,6 +1,20 @@
 """Graph ontology of a database schema: entities, attributes and join edges."""
 
-from brutal_sql.graph.entity import Edge, EdgeType, EntityAttribute, EntityNode
+from brutal_sql.graph.annotation_apply import apply_annotations
+from brutal_sql.graph.annotations import (
+    TODO_MARKER,
+    AnnotationError,
+    annotations_from_json,
+    annotations_to_json,
+    draft_annotations,
+)
+from brutal_sql.graph.entity import (
+    Edge,
+    EdgeType,
+    EntityAttribute,
+    EntityNode,
+    TableType,
+)
 from brutal_sql.graph.errors import (
     AttributeNotFoundError,
     DuplicateEdgeError,
@@ -19,6 +33,7 @@ from brutal_sql.graph.serialization import (
 )
 
 __all__ = [
+    "AnnotationError",
     "AttributeNotFoundError",
     "DuplicateEdgeError",
     "DuplicateNodeError",
@@ -33,6 +48,12 @@ __all__ = [
     "MirrorSource",
     "NodeNotFoundError",
     "RowFilter",
+    "TODO_MARKER",
+    "TableType",
+    "annotations_from_json",
+    "annotations_to_json",
+    "apply_annotations",
+    "draft_annotations",
     "graph_from_dict",
     "graph_from_json",
     "graph_to_dict",

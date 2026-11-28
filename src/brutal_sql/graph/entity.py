@@ -25,6 +25,13 @@ class EdgeType(StrEnum):
     BACKWARD = "backward"
 
 
+class TableType(StrEnum):
+    """Role of a table in the ontology; only entity tables can root a join tree."""
+
+    ENTITY = "entity"
+    DIMENSION = "dimension"
+
+
 @dataclass(frozen=True)
 class EntityAttribute:
     """A column of a table, with a human readable name (e.g. cid -> cookie id)."""
@@ -49,6 +56,8 @@ class Edge:
     edge_id names the foreign key the edge comes from (its constraint name);
     nullable is True when a foreign key column on the referencing table can be
     NULL. The forward and backward edge of one foreign key share both values.
+    role_name tells apart two foreign keys between the same tables (e.g.
+    "billing", "shipping"); None means the foreign key has no role name.
     """
 
     source_field: str
@@ -59,6 +68,7 @@ class Edge:
     extra_column_pairs: tuple[tuple[str, str], ...] = ()
     edge_id: str | None = None
     nullable: bool = False
+    role_name: str | None = None
 
     def __post_init__(self) -> None:
         require_text(self.source_field, "source_field")
@@ -72,6 +82,8 @@ class Edge:
             require_text(self.edge_id, "edge_id")
         if not isinstance(self.nullable, bool):
             raise GraphError(f"nullable must be a bool, got {self.nullable!r}")
+        if self.role_name is not None:
+            require_text(self.role_name, "role_name")
 
     @property
     def column_pairs(self) -> tuple[tuple[str, str], ...]:
@@ -107,17 +119,21 @@ class EntityNode:
 
     mirror_of is set on a mirror node, a graph-only copy of a self-referencing
     table; it says how to rebuild the mirror from the physical table.
+    table_type is None until the ontology annotations give the table a type.
     """
 
     name: str
     attributes: list[EntityAttribute]
     edges: list[Edge] = field(default_factory=list)
     mirror_of: MirrorSource | None = None
+    table_type: TableType | None = None
 
     def __post_init__(self) -> None:
         require_text(self.name, "name")
         self._check_attributes()
         self._check_mirror_of()
+        if self.table_type is not None and not isinstance(self.table_type, TableType):
+            raise GraphError(f"table_type must be a TableType, got {self.table_type!r}")
         initial_edges = list(self.edges)
         self.attributes = list(self.attributes)
         self.edges = []

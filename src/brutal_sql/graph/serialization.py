@@ -3,7 +3,13 @@
 import json
 from typing import Any
 
-from brutal_sql.graph.entity import Edge, EdgeType, EntityAttribute, EntityNode
+from brutal_sql.graph.entity import (
+    Edge,
+    EdgeType,
+    EntityAttribute,
+    EntityNode,
+    TableType,
+)
 from brutal_sql.graph.errors import GraphError
 from brutal_sql.graph.mirror import MirrorSource, RowFilter
 from brutal_sql.graph.schema_graph import Graph
@@ -11,6 +17,7 @@ from brutal_sql.graph.schema_graph import Graph
 FORMAT_VERSION = 1
 EDGE_TYPES = {edge_type.value: edge_type for edge_type in EdgeType}
 ROW_FILTERS = {row_filter.value: row_filter for row_filter in RowFilter}
+TABLE_TYPES = {table_type.value: table_type for table_type in TableType}
 
 
 def graph_to_dict(graph: Graph) -> dict[str, Any]:
@@ -32,6 +39,7 @@ def _node_to_dict(node: EntityNode) -> dict[str, Any]:
         ],
         "edges": [_edge_to_dict(edge) for edge in node.edges],
         "mirror_of": _mirror_to_dict(node.mirror_of),
+        "table_type": None if node.table_type is None else node.table_type.value,
     }
 
 
@@ -59,6 +67,7 @@ def _edge_to_dict(edge: Edge) -> dict[str, Any]:
         "extra_column_pairs": [list(pair) for pair in edge.extra_column_pairs],
         "edge_id": edge.edge_id,
         "nullable": edge.nullable,
+        "role_name": edge.role_name,
     }
 
 
@@ -83,7 +92,18 @@ def _node_from_dict(data: dict[str, Any]) -> EntityNode:
     ]
     edges = [_edge_from_dict(edge) for edge in data["edges"]]
     mirror_of = _mirror_from_dict(data.get("mirror_of"))
-    return EntityNode(data["name"], attributes, edges, mirror_of)
+    table_type = _table_type_from_value(data.get("table_type"))
+    return EntityNode(data["name"], attributes, edges, mirror_of, table_type)
+
+
+def _table_type_from_value(value: object) -> TableType | None:
+    """Rebuild a node's table type; None (or a missing key) means not annotated."""
+    if value is None:
+        return None
+    table_type = TABLE_TYPES.get(value) if isinstance(value, str) else None
+    if table_type is None:
+        raise GraphError(f"unknown table_type {value!r}")
+    return table_type
 
 
 def _mirror_from_dict(data: dict[str, Any] | None) -> MirrorSource | None:
@@ -145,6 +165,7 @@ def _edge_from_dict(data: dict[str, Any]) -> Edge:
         _extra_pairs_from_list(data.get("extra_column_pairs")),
         edge_id=data["edge_id"],
         nullable=data["nullable"],
+        role_name=data.get("role_name"),
     )
 
 
