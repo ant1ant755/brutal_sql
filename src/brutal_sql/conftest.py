@@ -128,3 +128,39 @@ def staff_schema(postgres_settings: ConnectionSettings) -> Iterator[ConnectionSe
             connection.exec_driver_sql(STAFF_DDL[0])
     finally:
         engine.dispose()
+
+
+LINES_SCHEMA = "ant10_lines"
+LINES_DDL = [
+    f"DROP SCHEMA IF EXISTS {LINES_SCHEMA} CASCADE",
+    f"CREATE SCHEMA {LINES_SCHEMA}",
+    f"""CREATE TABLE {LINES_SCHEMA}.order_lines (
+        order_id integer NOT NULL, line_no integer NOT NULL, sku text NOT NULL,
+        PRIMARY KEY (order_id, line_no))""",
+    f"""CREATE TABLE {LINES_SCHEMA}.shipments (
+        id integer PRIMARY KEY, order_id integer NOT NULL, line_no integer NOT NULL,
+        FOREIGN KEY (order_id, line_no)
+            REFERENCES {LINES_SCHEMA}.order_lines (order_id, line_no))""",
+    f"""INSERT INTO {LINES_SCHEMA}.order_lines (order_id, line_no, sku) VALUES
+        (7, 1, 'pen'), (7, 2, 'ink'), (7, 3, 'pad'), (8, 2, 'cup')""",
+    f"INSERT INTO {LINES_SCHEMA}.shipments (id, order_id, line_no) VALUES (1, 7, 2)",
+]
+
+
+@pytest.fixture(scope="session")
+def lines_schema(postgres_settings: ConnectionSettings) -> Iterator[ConnectionSettings]:
+    """Create the lines schema (shipments -> order_lines on two columns), then drop it.
+
+    Runs only against the local Docker test container.
+    """
+    settings = dataclasses.replace(postgres_settings, schema_name=LINES_SCHEMA)
+    engine = create_engine(settings.to_sqlalchemy_url())
+    try:
+        with engine.begin() as connection:
+            for statement in LINES_DDL:
+                connection.exec_driver_sql(statement)
+        yield settings
+        with engine.begin() as connection:
+            connection.exec_driver_sql(LINES_DDL[0])
+    finally:
+        engine.dispose()

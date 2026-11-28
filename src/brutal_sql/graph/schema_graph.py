@@ -1,6 +1,7 @@
 """Graph of entities in one database schema, linked by foreign key edges."""
 
 from collections import deque
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 from brutal_sql.graph.entity import Edge, EdgeType, EntityNode, require_text
@@ -11,34 +12,16 @@ from brutal_sql.graph.errors import (
     GraphError,
     NodeNotFoundError,
 )
+from brutal_sql.graph.foreign_key_edges import (
+    build_foreign_key_edges,
+    pair_foreign_key_columns,
+)
+from brutal_sql.graph.join_step import JoinStep
 from brutal_sql.graph.mirror import require_mirror_columns
 
+__all__ = ["DEFAULT_MAX_JOINS", "Graph", "JoinStep", "count_backward_steps"]
+
 DEFAULT_MAX_JOINS = 4
-
-
-@dataclass(frozen=True)
-class JoinStep:
-    """One join: following an edge from from_table to edge.target_table."""
-
-    from_table: str
-    edge: Edge
-
-    def __post_init__(self) -> None:
-        require_text(self.from_table, "from_table")
-        if not isinstance(self.edge, Edge):
-            raise GraphError(f"not an Edge: {self.edge!r}")
-
-    @property
-    def to_table(self) -> str:
-        """The table this step joins to."""
-        return self.edge.target_table
-
-    def to_join_condition(self) -> str:
-        """Return the SQL join condition, e.g. 'orders.customer_id = customers.id'."""
-        return (
-            f"{self.from_table}.{self.edge.source_field} = "
-            f"{self.edge.target_table}.{self.edge.target_table_field}"
-        )
 
 
 @dataclass(frozen=True)
@@ -111,7 +94,8 @@ class Graph:
                 target = node
             else:
                 target = self.get_node(edge.target_table)
-            _require_attribute(target, edge.target_table_field)
+            for target_field in edge.target_fields:
+                _require_attribute(target, target_field)
 
     def _check_mirror_source(self, node: EntityNode) -> None:
         """Require a mirror's physical table to be in the graph with its columns."""
@@ -158,15 +142,38 @@ class Graph:
         Example: orders.customer_id -> customers.id with verbs 'placed by' and
         'places' adds orders -placed by-> customers and customers -places-> orders.
         """
+        return self.add_composite_foreign_key(
+            source_table,
+            [source_field],
+            target_table,
+            [target_field],
+            forward_verb,
+            backward_verb,
+        )
+
+    def add_composite_foreign_key(
+        self,
+        source_table: str,
+        source_fields: Sequence[str],
+        target_table: str,
+        target_fields: Sequence[str],
+        forward_verb: str,
+        backward_verb: str,
+    ) -> tuple[Edge, Edge]:
+        """Add both edges of a foreign key on one or more columns, paired in order.
+
+        Example: shipments(order_id, line_no) -> order_lines(order_id, line_no).
+        Raises GraphError if the column lists are empty or differ in length,
+        and AttributeNotFoundError if a column is missing.
+        """
+        pairs = pair_foreign_key_columns(source_fields, target_fields)
         source_node = self.get_node(source_table)
         target_node = self.get_node(target_table)
-        _require_attribute(source_node, source_field)
-        _require_attribute(target_node, target_field)
-        forward = Edge(
-            source_field, target_table, target_field, forward_verb, EdgeType.FORWARD
-        )
-        backward = Edge(
-            target_field, source_table, source_field, backward_verb, EdgeType.BACKWARD
+        for source_field, target_field in pairs:
+            _require_attribute(source_node, source_field)
+            _require_attribute(target_node, target_field)
+        forward, backward = build_foreign_key_edges(
+            source_table, pairs, target_table, (forward_verb, backward_verb)
         )
         _require_new_edge(source_node, forward)
         _require_new_edge(target_node, backward)
