@@ -60,6 +60,9 @@ def test_incomplete_shop_ontology_fails_without_leaking(
     secrets = [str(shop_schema.username), str(shop_schema.password)]
     leaked = any(secret in text for secret in secrets for text in texts)
     assert not leaked, "error text or logs leak a database username or password"
+    cause_text = str(caught.value.__cause__)
+    cause_leaks = any(secret in cause_text for secret in secrets)
+    assert not cause_leaks, "ontology error text leaks a database username or password"
     assert "table 'orders' has no table type" in str(caught.value)
     assert "'orders_customer_id_fkey' (customer -> orders) has no backward verb" in str(
         caught.value

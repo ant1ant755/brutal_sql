@@ -25,7 +25,7 @@ class OntologyError(GraphError):
         super().__init__(f"ontology is incomplete:\n{listed}")
 
 
-def describe_edge(node_name: str, edge: Edge) -> str:
+def _describe_edge(node_name: str, edge: Edge) -> str:
     """Name an edge by its edge_id, or by its columns when it has none."""
     if edge.edge_id is not None:
         return f"edge {edge.edge_id!r}"
@@ -64,7 +64,7 @@ def _verb_problems(node: EntityNode) -> list[str]:
             continue
         direction = "forward" if edge.edge_type == EdgeType.FORWARD else "backward"
         problems.append(
-            f"{describe_edge(node.name, edge)} ({node.name} -> {edge.target_table}) "
+            f"{_describe_edge(node.name, edge)} ({node.name} -> {edge.target_table}) "
             f"has no {direction} verb"
         )
     return problems
@@ -88,7 +88,7 @@ def _group_role_problems(source: str, target: str, edges: list[Edge]) -> list[st
     """Report missing and repeated role names among foreign keys source -> target."""
     tables = f"{source} -> {target}"
     problems = [
-        f"{describe_edge(source, edge)} ({tables}) needs a role name: "
+        f"{_describe_edge(source, edge)} ({tables}) needs a role name: "
         f"{len(edges)} foreign keys join these tables"
         for edge in edges
         if edge.role_name is None
