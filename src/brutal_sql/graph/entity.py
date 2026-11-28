@@ -1,5 +1,6 @@
 """Plain data classes for entities (tables), their attributes (columns) and edges."""
 
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 from enum import StrEnum
 
@@ -200,18 +201,31 @@ class EntityNode:
         target_table: str,
         target_table_field: str,
     ) -> Edge:
-        """Return the edge joining these columns, whatever its verb label."""
+        """Return the single-column edge joining these columns, whatever its verb."""
+        return self.find_edge_along(
+            edge_type, target_table, [(source_field, target_table_field)]
+        )
+
+    def find_edge_along(
+        self,
+        edge_type: EdgeType,
+        target_table: str,
+        column_pairs: Sequence[tuple[str, str]],
+    ) -> Edge:
+        """Return the edge whose (source, target) column pairs match exactly, in order.
+
+        A prefix of a composite key does not match. Raises EdgeNotFoundError.
+        """
+        wanted = tuple(tuple(pair) for pair in column_pairs)
         for edge in self.edges:
-            if (
-                edge.edge_type == edge_type
-                and edge.source_field == source_field
-                and edge.target_table == target_table
-                and edge.target_table_field == target_table_field
-            ):
+            if (edge.edge_type, edge.target_table) != (edge_type, target_table):
+                continue
+            if edge.column_pairs == wanted:
                 return edge
+        columns = ", ".join(f"{source} -> {target}" for source, target in wanted)
         raise EdgeNotFoundError(
-            f"entity {self.name!r} has no {edge_type} edge "
-            f"{source_field} -> {target_table}.{target_table_field}"
+            f"entity {self.name!r} has no {edge_type} edge to {target_table!r} "
+            f"on ({columns})"
         )
 
     def remove_edges_to(self, table_name: str) -> list[Edge]:

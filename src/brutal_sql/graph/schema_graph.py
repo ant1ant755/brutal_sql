@@ -2,7 +2,6 @@
 
 from collections import deque
 from collections.abc import Sequence
-from dataclasses import dataclass
 
 from brutal_sql.graph.entity import Edge, EdgeType, EntityNode, require_text
 from brutal_sql.graph.errors import DuplicateNodeError, GraphError, NodeNotFoundError
@@ -14,32 +13,14 @@ from brutal_sql.graph.foreign_key_edges import (
 )
 from brutal_sql.graph.join_step import JoinStep
 from brutal_sql.graph.mirror import require_mirror_columns
+from brutal_sql.graph.path_search import (
+    DEFAULT_MAX_JOINS,
+    PathSearch,
+    count_backward_steps,
+    require_max_joins,
+)
 
 __all__ = ["DEFAULT_MAX_JOINS", "Graph", "JoinStep", "count_backward_steps"]
-
-DEFAULT_MAX_JOINS = 4
-
-
-@dataclass(frozen=True)
-class _PathSearch:
-    """Settings shared by every step of one join path search."""
-
-    start_table: str
-    max_joins: int
-    forward_only: bool
-
-
-def count_backward_steps(path: list[JoinStep]) -> int:
-    """Return how many steps in a join path follow backward edges."""
-    return sum(1 for step in path if step.edge.edge_type == EdgeType.BACKWARD)
-
-
-def _require_max_joins(max_joins: int) -> None:
-    """Raise GraphError unless max_joins is a positive integer."""
-    if isinstance(max_joins, bool) or not isinstance(max_joins, int):
-        raise GraphError(f"max_joins must be an integer, got {max_joins!r}")
-    if max_joins < 1:
-        raise GraphError(f"max_joins must be at least 1, got {max_joins}")
 
 
 class Graph:
@@ -195,15 +176,29 @@ class Graph:
     def remove_foreign_key(
         self, source_table: str, source_field: str, target_table: str, target_field: str
     ) -> tuple[Edge, Edge]:
-        """Remove both edges of a foreign key; raise if either is missing."""
+        """Remove both edges of a one-column foreign key; raise if either is missing."""
+        return self.remove_composite_foreign_key(
+            source_table, [source_field], target_table, [target_field]
+        )
+
+    def remove_composite_foreign_key(
+        self,
+        source_table: str,
+        source_fields: Sequence[str],
+        target_table: str,
+        target_fields: Sequence[str],
+    ) -> tuple[Edge, Edge]:
+        """Remove the forward and backward edge whose column pairs match exactly.
+
+        Raises GraphError if the column counts differ, and EdgeNotFoundError (with
+        nothing removed) unless both edges match every pair, in order.
+        """
+        pairs = pair_foreign_key_columns(source_fields, target_fields)
         source_node = self.get_node(source_table)
         target_node = self.get_node(target_table)
-        forward = source_node.find_edge(
-            EdgeType.FORWARD, source_field, target_table, target_field
-        )
-        backward = target_node.find_edge(
-            EdgeType.BACKWARD, target_field, source_table, source_field
-        )
+        forward = source_node.find_edge_along(EdgeType.FORWARD, target_table, pairs)
+        swapped = [(target, source) for source, target in pairs]
+        backward = target_node.find_edge_along(EdgeType.BACKWARD, source_table, swapped)
         source_node.remove_edge(forward)
         target_node.remove_edge(backward)
         return forward, backward
@@ -249,15 +244,15 @@ class Graph:
         Paths are sorted by number of joins, then by number of backward steps.
         """
         self.get_node(start_table)
-        _require_max_joins(max_joins)
-        search = _PathSearch(start_table, max_joins, forward_only)
+        require_max_joins(max_joins)
+        search = PathSearch(start_table, max_joins, forward_only)
         found: list[list[JoinStep]] = []
         self._collect_paths(search, [], frozenset({start_table}), found)
         return sorted(found, key=lambda path: (len(path), count_backward_steps(path)))
 
     def _collect_paths(
         self,
-        search: _PathSearch,
+        search: PathSearch,
         path: list[JoinStep],
         visited: frozenset[str],
         found: list[list[JoinStep]],
