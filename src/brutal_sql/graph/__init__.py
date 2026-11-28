@@ -23,6 +23,7 @@ from brutal_sql.graph.errors import (
     GraphError,
     NodeNotFoundError,
 )
+from brutal_sql.graph.join_subsets import find_connected_table_sets
 from brutal_sql.graph.join_tree import JoinTree, JoinTreeError, JoinType, TreeEdge
 from brutal_sql.graph.mirror import MirrorSource, RowFilter
 from brutal_sql.graph.ontology_validator import (
@@ -67,6 +68,7 @@ __all__ = [
     "annotations_to_json",
     "apply_annotations",
     "draft_annotations",
+    "find_connected_table_sets",
     "find_ontology_problems",
     "graph_from_dict",
     "graph_from_json",
