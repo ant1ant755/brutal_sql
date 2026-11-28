@@ -1,0 +1,21 @@
+{
+  "format_version": 1,
+  "schema_name": "handmade_weather",
+  "tables": {
+    "reading": {
+      "type": "entity"
+    },
+    "station": {
+      "type": "entity"
+    }
+  },
+  "edges": {
+    "reading_station_id_fkey": {
+      "from_table": "reading",
+      "to_table": "station",
+      "verb_forward": "taken at",
+      "verb_backward": "records",
+      "role_name": null
+    }
+  }
+}

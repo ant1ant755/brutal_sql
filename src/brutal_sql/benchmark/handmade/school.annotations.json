@@ -1,0 +1,41 @@
+{
+  "format_version": 1,
+  "schema_name": "handmade_school",
+  "tables": {
+    "course": {
+      "type": "entity"
+    },
+    "enrollment": {
+      "type": "entity"
+    },
+    "student": {
+      "type": "entity"
+    },
+    "teacher": {
+      "type": "entity"
+    }
+  },
+  "edges": {
+    "course_teacher_id_fkey": {
+      "from_table": "course",
+      "to_table": "teacher",
+      "verb_forward": "taught by",
+      "verb_backward": "teaches",
+      "role_name": null
+    },
+    "enrollment_course_id_fkey": {
+      "from_table": "enrollment",
+      "to_table": "course",
+      "verb_forward": "is for",
+      "verb_backward": "has",
+      "role_name": null
+    },
+    "enrollment_student_id_fkey": {
+      "from_table": "enrollment",
+      "to_table": "student",
+      "verb_forward": "held by",
+      "verb_backward": "holds",
+      "role_name": null
+    }
+  }
+}
