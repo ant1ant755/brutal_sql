@@ -18,11 +18,14 @@ exclude = ["src/**/test_*.py", "src/**/conftest.py"]
 [tool.black]
 line-length = 88
 target-version = ["py312"]
+# data/ holds downloaded datasets (e.g. Spider ships .py files); never format them.
+extend-exclude = "^/data/"
 
 [tool.isort]
 profile = "black"
 line_length = 88
 src_paths = ["src", "."]
+extend_skip = ["data"]
 
 [tool.pytest.ini_options]
 testpaths = ["src", "test_project_config.py"]
