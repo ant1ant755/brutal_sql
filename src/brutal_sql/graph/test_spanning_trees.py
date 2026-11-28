@@ -3,11 +3,14 @@
 import pytest
 
 from brutal_sql.graph import (
+    ForeignKeyLink,
     Graph,
+    JoinTree,
     JoinTreeError,
     JoinType,
     NodeNotFoundError,
     find_spanning_trees,
+    foreign_keys_within,
 )
 from brutal_sql.graph.test_join_tree import make_graph
 from brutal_sql.graph.test_schema_graph import make_unlinked_graph
@@ -25,7 +28,8 @@ def make_two_key_graph() -> Graph:
     return graph
 
 
-def edge_ids(trees: list) -> list[tuple[str, ...]]:
+def edge_ids(trees: list[JoinTree]) -> list[tuple[str, ...]]:
+    """Return the edge_ids of each tree, in tree order."""
     return [tuple(edge.edge_id for edge in tree.edges) for tree in trees]
 
 
@@ -99,3 +103,27 @@ def test_foreign_key_without_edge_id_is_rejected() -> None:
     graph.add_foreign_key("orders", "customer_id", "customers", "id", "a", "b")
     with pytest.raises(JoinTreeError, match="has no edge_id"):
         find_spanning_trees(graph, ["orders", "customers"])
+
+
+def test_foreign_keys_within_lists_only_keys_inside_the_set() -> None:
+    links = foreign_keys_within(make_two_key_graph(), ["orders", "customers"])
+    assert links == [
+        ForeignKeyLink("last_fkey", "customers", "orders"),
+        ForeignKeyLink("orders_customer_id_fkey", "orders", "customers"),
+    ]
+
+
+def test_foreign_keys_within_a_single_table_is_empty() -> None:
+    assert foreign_keys_within(make_graph(), ["order_items"]) == []
+
+
+def test_foreign_keys_within_rejects_a_key_without_edge_id() -> None:
+    graph = make_unlinked_graph()
+    graph.add_foreign_key("orders", "customer_id", "customers", "id", "a", "b")
+    with pytest.raises(JoinTreeError, match="has no edge_id"):
+        foreign_keys_within(graph, ["orders", "customers"])
+
+
+def test_foreign_keys_within_rejects_an_unknown_table() -> None:
+    with pytest.raises(NodeNotFoundError):
+        foreign_keys_within(make_graph(), ["orders", "invoices"])
