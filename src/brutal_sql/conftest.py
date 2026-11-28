@@ -164,3 +164,42 @@ def lines_schema(postgres_settings: ConnectionSettings) -> Iterator[ConnectionSe
             connection.exec_driver_sql(LINES_DDL[0])
     finally:
         engine.dispose()
+
+
+BILLING_SCHEMA = "ant11_billing"
+BILLING_DDL = [
+    f"DROP SCHEMA IF EXISTS {BILLING_SCHEMA} CASCADE",
+    f"CREATE SCHEMA {BILLING_SCHEMA}",
+    f"CREATE TABLE {BILLING_SCHEMA}.address (id integer PRIMARY KEY, city text)",
+    f"""CREATE TABLE {BILLING_SCHEMA}.orders (
+        id integer PRIMARY KEY,
+        billing_address_id integer NOT NULL
+            CONSTRAINT orders_billing_fkey REFERENCES {BILLING_SCHEMA}.address (id),
+        shipping_address_id integer
+            CONSTRAINT orders_shipping_fkey
+            REFERENCES {BILLING_SCHEMA}.address (id))""",
+    f"""CREATE TABLE {BILLING_SCHEMA}.complaints (
+        id integer PRIMARY KEY,
+        order_id integer REFERENCES {BILLING_SCHEMA}.orders (id))""",
+]
+
+
+@pytest.fixture(scope="session")
+def billing_schema(
+    postgres_settings: ConnectionSettings,
+) -> Iterator[ConnectionSettings]:
+    """Create the billing schema (orders -> address twice, complaints), then drop it.
+
+    Runs only against the local Docker test container.
+    """
+    settings = dataclasses.replace(postgres_settings, schema_name=BILLING_SCHEMA)
+    engine = create_engine(settings.to_sqlalchemy_url())
+    try:
+        with engine.begin() as connection:
+            for statement in BILLING_DDL:
+                connection.exec_driver_sql(statement)
+        yield settings
+        with engine.begin() as connection:
+            connection.exec_driver_sql(BILLING_DDL[0])
+    finally:
+        engine.dispose()

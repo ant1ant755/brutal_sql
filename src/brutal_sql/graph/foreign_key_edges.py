@@ -2,8 +2,12 @@
 
 from collections.abc import Sequence
 
-from brutal_sql.graph.entity import Edge, EdgeType
-from brutal_sql.graph.errors import GraphError
+from brutal_sql.graph.entity import Edge, EdgeType, EntityNode
+from brutal_sql.graph.errors import (
+    AttributeNotFoundError,
+    DuplicateEdgeError,
+    GraphError,
+)
 
 
 def pair_foreign_key_columns(
@@ -32,13 +36,23 @@ def edge_along(
     target_table: str,
     verb_label: str,
     edge_type: EdgeType,
+    *,
+    edge_id: str | None = None,
+    nullable: bool = False,
 ) -> Edge:
     """Return an edge joining along pairs; the first pair fills the main fields."""
     if not pairs:
         raise GraphError("an edge needs at least one column pair")
     (source_field, target_field), *extra = pairs
     return Edge(
-        source_field, target_table, target_field, verb_label, edge_type, tuple(extra)
+        source_field,
+        target_table,
+        target_field,
+        verb_label,
+        edge_type,
+        tuple(extra),
+        edge_id=edge_id,
+        nullable=nullable,
     )
 
 
@@ -47,12 +61,44 @@ def build_foreign_key_edges(
     pairs: Sequence[tuple[str, str]],
     target_table: str,
     verbs: tuple[str, str],
+    *,
+    edge_id: str | None = None,
+    nullable: bool = False,
 ) -> tuple[Edge, Edge]:
     """Return (forward, backward) edges for a foreign key source -> target.
 
     verbs is (forward verb, backward verb). The backward edge swaps each pair.
+    Both edges get the same edge_id and nullable.
     """
-    forward = edge_along(pairs, target_table, verbs[0], EdgeType.FORWARD)
+    forward = edge_along(
+        pairs,
+        target_table,
+        verbs[0],
+        EdgeType.FORWARD,
+        edge_id=edge_id,
+        nullable=nullable,
+    )
     reversed_pairs = [(target, source) for source, target in pairs]
-    backward = edge_along(reversed_pairs, source_table, verbs[1], EdgeType.BACKWARD)
+    backward = edge_along(
+        reversed_pairs,
+        source_table,
+        verbs[1],
+        EdgeType.BACKWARD,
+        edge_id=edge_id,
+        nullable=nullable,
+    )
     return forward, backward
+
+
+def require_attribute(node: EntityNode, attribute_name: str) -> None:
+    """Raise AttributeNotFoundError unless node has the attribute."""
+    if not node.has_attribute(attribute_name):
+        raise AttributeNotFoundError(
+            f"entity {node.name!r} has no attribute {attribute_name!r}"
+        )
+
+
+def require_new_edge(node: EntityNode, edge: Edge) -> None:
+    """Raise DuplicateEdgeError if node already has this edge."""
+    if edge in node.edges:
+        raise DuplicateEdgeError(f"entity {node.name!r} already has {edge!r}")

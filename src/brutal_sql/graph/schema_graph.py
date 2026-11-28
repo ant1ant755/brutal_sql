@@ -5,16 +5,12 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 
 from brutal_sql.graph.entity import Edge, EdgeType, EntityNode, require_text
-from brutal_sql.graph.errors import (
-    AttributeNotFoundError,
-    DuplicateEdgeError,
-    DuplicateNodeError,
-    GraphError,
-    NodeNotFoundError,
-)
+from brutal_sql.graph.errors import DuplicateNodeError, GraphError, NodeNotFoundError
 from brutal_sql.graph.foreign_key_edges import (
     build_foreign_key_edges,
     pair_foreign_key_columns,
+    require_attribute,
+    require_new_edge,
 )
 from brutal_sql.graph.join_step import JoinStep
 from brutal_sql.graph.mirror import require_mirror_columns
@@ -95,7 +91,7 @@ class Graph:
             else:
                 target = self.get_node(edge.target_table)
             for target_field in edge.target_fields:
-                _require_attribute(target, target_field)
+                require_attribute(target, target_field)
 
     def _check_mirror_source(self, node: EntityNode) -> None:
         """Require a mirror's physical table to be in the graph with its columns."""
@@ -136,11 +132,15 @@ class Graph:
         target_field: str,
         forward_verb: str,
         backward_verb: str,
+        *,
+        edge_id: str | None = None,
+        nullable: bool = False,
     ) -> tuple[Edge, Edge]:
         """Add a forward edge source -> target and a backward edge target -> source.
 
         Example: orders.customer_id -> customers.id with verbs 'placed by' and
         'places' adds orders -placed by-> customers and customers -places-> orders.
+        Both edges get edge_id (the foreign key's name) and nullable.
         """
         return self.add_composite_foreign_key(
             source_table,
@@ -149,6 +149,8 @@ class Graph:
             [target_field],
             forward_verb,
             backward_verb,
+            edge_id=edge_id,
+            nullable=nullable,
         )
 
     def add_composite_foreign_key(
@@ -159,10 +161,14 @@ class Graph:
         target_fields: Sequence[str],
         forward_verb: str,
         backward_verb: str,
+        *,
+        edge_id: str | None = None,
+        nullable: bool = False,
     ) -> tuple[Edge, Edge]:
         """Add both edges of a foreign key on one or more columns, paired in order.
 
         Example: shipments(order_id, line_no) -> order_lines(order_id, line_no).
+        Both edges get edge_id (the foreign key's name) and nullable.
         Raises GraphError if the column lists are empty or differ in length,
         and AttributeNotFoundError if a column is missing.
         """
@@ -170,13 +176,18 @@ class Graph:
         source_node = self.get_node(source_table)
         target_node = self.get_node(target_table)
         for source_field, target_field in pairs:
-            _require_attribute(source_node, source_field)
-            _require_attribute(target_node, target_field)
+            require_attribute(source_node, source_field)
+            require_attribute(target_node, target_field)
         forward, backward = build_foreign_key_edges(
-            source_table, pairs, target_table, (forward_verb, backward_verb)
+            source_table,
+            pairs,
+            target_table,
+            (forward_verb, backward_verb),
+            edge_id=edge_id,
+            nullable=nullable,
         )
-        _require_new_edge(source_node, forward)
-        _require_new_edge(target_node, backward)
+        require_new_edge(source_node, forward)
+        require_new_edge(target_node, backward)
         source_node.add_edge(forward)
         target_node.add_edge(backward)
         return forward, backward
@@ -275,17 +286,3 @@ class Graph:
             raise GraphError("start_table and end_table must be different tables")
         paths = self.find_all_join_paths_from(start_table, max_joins, forward_only)
         return [path for path in paths if path[-1].to_table == end_table]
-
-
-def _require_attribute(node: EntityNode, attribute_name: str) -> None:
-    """Raise AttributeNotFoundError unless node has the attribute."""
-    if not node.has_attribute(attribute_name):
-        raise AttributeNotFoundError(
-            f"entity {node.name!r} has no attribute {attribute_name!r}"
-        )
-
-
-def _require_new_edge(node: EntityNode, edge: Edge) -> None:
-    """Raise DuplicateEdgeError if node already has this edge."""
-    if edge in node.edges:
-        raise DuplicateEdgeError(f"entity {node.name!r} already has {edge!r}")

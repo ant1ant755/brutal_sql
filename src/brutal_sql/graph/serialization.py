@@ -57,6 +57,8 @@ def _edge_to_dict(edge: Edge) -> dict[str, Any]:
         "verb_label": edge.verb_label,
         "edge_type": edge.edge_type.value,
         "extra_column_pairs": [list(pair) for pair in edge.extra_column_pairs],
+        "edge_id": edge.edge_id,
+        "nullable": edge.nullable,
     }
 
 
@@ -118,11 +120,22 @@ def _extra_pairs_from_list(pairs: object) -> tuple[tuple[object, ...], ...]:
     return tuple(_pair_from_list(pair, "extra_column_pairs") for pair in pairs)
 
 
+def _require_edge_identity(data: dict[str, Any]) -> None:
+    """Raise GraphError unless the edge data has both edge_id and nullable keys."""
+    for key in ("edge_id", "nullable"):
+        if key not in data:
+            raise GraphError(
+                f"edge {data.get('source_field')!r} -> "
+                f"{data.get('target_table')!r} is missing {key!r}"
+            )
+
+
 def _edge_from_dict(data: dict[str, Any]) -> Edge:
-    """Rebuild one edge; raise GraphError for an unknown edge type."""
+    """Rebuild one edge; raise GraphError for an unknown type or missing identity."""
     edge_type = EDGE_TYPES.get(data["edge_type"])
     if edge_type is None:
         raise GraphError(f"unknown edge_type {data['edge_type']!r}")
+    _require_edge_identity(data)
     return Edge(
         data["source_field"],
         data["target_table"],
@@ -130,6 +143,8 @@ def _edge_from_dict(data: dict[str, Any]) -> Edge:
         data["verb_label"],
         edge_type,
         _extra_pairs_from_list(data.get("extra_column_pairs")),
+        edge_id=data["edge_id"],
+        nullable=data["nullable"],
     )
 
 

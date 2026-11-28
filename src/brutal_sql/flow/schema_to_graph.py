@@ -9,6 +9,7 @@ from brutal_sql.db.table_metadata import (
     TableMetadata,
 )
 from brutal_sql.errors import ProcessingError
+from brutal_sql.flow.foreign_key_identity import edge_id_for, is_foreign_key_nullable
 from brutal_sql.flow.self_reference import add_mirror_tables, is_self_referencing
 from brutal_sql.graph import EntityAttribute, EntityNode, Graph, GraphError
 
@@ -49,11 +50,29 @@ def _skip_reason(
     return None
 
 
+def _add_edges_for(
+    graph: Graph, table: TableMetadata, foreign_key: ForeignKeyMetadata
+) -> None:
+    """Add both edges of one foreign key, labelled with its name and nullability."""
+    graph.add_composite_foreign_key(
+        table.name,
+        foreign_key.column_names,
+        foreign_key.referred_table,
+        foreign_key.referred_column_names,
+        FORWARD_VERB,
+        BACKWARD_VERB,
+        edge_id=edge_id_for(table, foreign_key),
+        nullable=is_foreign_key_nullable(table, foreign_key),
+    )
+
+
 def add_foreign_key_edges(graph: Graph, table: TableMetadata) -> int:
     """Add forward and backward edges for each supported foreign key of table.
 
     A composite foreign key becomes one edge each way holding every column
-    pair. Unsupported or repeated foreign keys are skipped with a warning.
+    pair. Each edge carries the foreign key's name (edge_id) and whether its
+    columns can be NULL. Unsupported or repeated foreign keys are skipped with
+    a warning.
     Returns the number of foreign keys added.
     """
     added: set[tuple[tuple[str, ...], str, tuple[str, ...]]] = set()
@@ -69,7 +88,7 @@ def add_foreign_key_edges(graph: Graph, table: TableMetadata) -> int:
         if reason is not None:
             logger.warning("Skipping foreign key %r on %r: %s", key, table.name, reason)
             continue
-        graph.add_composite_foreign_key(table.name, *key, FORWARD_VERB, BACKWARD_VERB)
+        _add_edges_for(graph, table, foreign_key)
         added.add(key)
     return len(added)
 
