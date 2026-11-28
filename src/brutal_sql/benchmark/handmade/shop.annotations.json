@@ -1,0 +1,51 @@
+{
+  "format_version": 1,
+  "schema_name": "handmade_shop",
+  "tables": {
+    "category": {
+      "type": "dimension"
+    },
+    "customer": {
+      "type": "entity"
+    },
+    "order_item": {
+      "type": "entity"
+    },
+    "orders": {
+      "type": "entity"
+    },
+    "product": {
+      "type": "entity"
+    }
+  },
+  "edges": {
+    "order_item_order_id_fkey": {
+      "from_table": "order_item",
+      "to_table": "orders",
+      "verb_forward": "belongs to",
+      "verb_backward": "contains",
+      "role_name": null
+    },
+    "order_item_product_id_fkey": {
+      "from_table": "order_item",
+      "to_table": "product",
+      "verb_forward": "is for",
+      "verb_backward": "is sold in",
+      "role_name": null
+    },
+    "orders_customer_id_fkey": {
+      "from_table": "orders",
+      "to_table": "customer",
+      "verb_forward": "placed by",
+      "verb_backward": "places",
+      "role_name": null
+    },
+    "product_category_id_fkey": {
+      "from_table": "product",
+      "to_table": "category",
+      "verb_forward": "belongs to",
+      "verb_backward": "groups",
+      "role_name": null
+    }
+  }
+}

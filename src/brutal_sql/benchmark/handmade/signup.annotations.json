@@ -1,0 +1,21 @@
+{
+  "format_version": 1,
+  "schema_name": "handmade_signup",
+  "tables": {
+    "confirmation": {
+      "type": "entity"
+    },
+    "member": {
+      "type": "entity"
+    }
+  },
+  "edges": {
+    "confirmation_member_id_fkey": {
+      "from_table": "confirmation",
+      "to_table": "member",
+      "verb_forward": "sent to",
+      "verb_backward": "receives",
+      "role_name": null
+    }
+  }
+}

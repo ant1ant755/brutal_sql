@@ -1,0 +1,31 @@
+{
+  "format_version": 1,
+  "schema_name": "handmade_staff",
+  "tables": {
+    "department": {
+      "type": "dimension"
+    },
+    "employee": {
+      "type": "entity"
+    },
+    "managers": {
+      "type": "entity"
+    }
+  },
+  "edges": {
+    "employee_department_id_fkey": {
+      "from_table": "employee",
+      "to_table": "department",
+      "verb_forward": "works in",
+      "verb_backward": "employs",
+      "role_name": null
+    },
+    "employee_manager_id_fkey": {
+      "from_table": "employee",
+      "to_table": "managers",
+      "verb_forward": "reports to",
+      "verb_backward": "manages",
+      "role_name": null
+    }
+  }
+}
