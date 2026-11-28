@@ -24,6 +24,12 @@ from brutal_sql.graph.errors import (
     NodeNotFoundError,
 )
 from brutal_sql.graph.mirror import MirrorSource, RowFilter
+from brutal_sql.graph.ontology_validator import (
+    PLACEHOLDER_VERBS,
+    OntologyError,
+    find_ontology_problems,
+    validate_ontology,
+)
 from brutal_sql.graph.schema_graph import Graph, JoinStep
 from brutal_sql.graph.serialization import (
     graph_from_dict,
@@ -47,6 +53,8 @@ __all__ = [
     "JoinStep",
     "MirrorSource",
     "NodeNotFoundError",
+    "OntologyError",
+    "PLACEHOLDER_VERBS",
     "RowFilter",
     "TODO_MARKER",
     "TableType",
@@ -54,8 +62,10 @@ __all__ = [
     "annotations_to_json",
     "apply_annotations",
     "draft_annotations",
+    "find_ontology_problems",
     "graph_from_dict",
     "graph_from_json",
     "graph_to_dict",
     "graph_to_json",
+    "validate_ontology",
 ]
