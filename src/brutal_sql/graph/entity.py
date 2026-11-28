@@ -45,6 +45,10 @@ class Edge:
     references. A backward edge goes the other way. source_field and
     target_table_field are the first column pair; a composite foreign key keeps
     its other pairs, in key order, in extra_column_pairs.
+
+    edge_id names the foreign key the edge comes from (its constraint name);
+    nullable is True when a foreign key column on the referencing table can be
+    NULL. The forward and backward edge of one foreign key share both values.
     """
 
     source_field: str
@@ -53,6 +57,8 @@ class Edge:
     verb_label: str
     edge_type: EdgeType
     extra_column_pairs: tuple[tuple[str, str], ...] = ()
+    edge_id: str | None = None
+    nullable: bool = False
 
     def __post_init__(self) -> None:
         require_text(self.source_field, "source_field")
@@ -62,6 +68,10 @@ class Edge:
         if not isinstance(self.edge_type, EdgeType):
             raise GraphError(f"edge_type must be an EdgeType, got {self.edge_type!r}")
         _require_column_pairs(self.extra_column_pairs)
+        if self.edge_id is not None:
+            require_text(self.edge_id, "edge_id")
+        if not isinstance(self.nullable, bool):
+            raise GraphError(f"nullable must be a bool, got {self.nullable!r}")
 
     @property
     def column_pairs(self) -> tuple[tuple[str, str], ...]:

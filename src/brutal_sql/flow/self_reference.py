@@ -12,6 +12,7 @@ from brutal_sql.db.table_metadata import (
     TableMetadata,
 )
 from brutal_sql.errors import ProcessingError
+from brutal_sql.flow.foreign_key_identity import edge_id_for, is_foreign_key_nullable
 from brutal_sql.graph import (
     EntityAttribute,
     EntityNode,
@@ -117,6 +118,8 @@ def _require_free_name(graph: Graph, mirror: EntityNode, table_name: str) -> Non
 def add_mirror_tables(graph: Graph, table: TableMetadata) -> int:
     """Add a mirror node and its two edges for each self-referencing foreign key.
 
+    The edges carry the foreign key's name (edge_id) and nullability.
+
     Raises ProcessingError if a mirror's name is already a node in the graph.
     Returns the number of mirrors added.
     """
@@ -134,6 +137,8 @@ def add_mirror_tables(graph: Graph, table: TableMetadata) -> int:
             foreign_key.referred_column_names[0],
             MIRROR_FORWARD_VERB,
             MIRROR_BACKWARD_VERB,
+            edge_id=edge_id_for(table, foreign_key),
+            nullable=is_foreign_key_nullable(table, foreign_key),
         )
         added += 1
     return added
