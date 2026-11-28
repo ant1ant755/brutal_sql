@@ -63,6 +63,9 @@ Screenshots and videos go in `screenshots/` (gitignored).
   the join paths used to build SQL. Plain Python classes, no database access. A
   self-referencing table (e.g. `employee.manager_id → employee.id`) gets a graph-only
   **mirror** node (`managers`) whose `MirrorSource` says how to rebuild it as a derived table.
+  Ontology annotations (`annotations.py`, `annotation_apply.py`): a JSON file next to the graph
+  gives each table a type (`entity`/`dimension`) and each `edge_id` real verbs and a role name;
+  `draft_annotations(graph)` writes it with `TODO` values, `apply_annotations` fills them in.
 - `src/brutal_sql/db/` — database access: `ConnectionSettings` (credentials kept out of
   `repr` and messages), `mask_credentials` for driver error text, table metadata records,
   and the Postgres fetcher that reads columns, primary keys, indexes and foreign keys of a
