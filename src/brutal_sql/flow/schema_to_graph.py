@@ -46,32 +46,30 @@ def _skip_reason(
         # Self joins become mirror tables (see flow.self_reference), which
         # convert_tables_to_graph adds instead of a self-loop edge.
         return "it references its own table (self join)"
-    if foreign_key.is_composite:
-        # TODO: support composite foreign keys with a multi-column edge.
-        return "it spans more than one column"
     return None
 
 
 def add_foreign_key_edges(graph: Graph, table: TableMetadata) -> int:
     """Add forward and backward edges for each supported foreign key of table.
 
-    Unsupported or repeated foreign keys are skipped with a warning.
+    A composite foreign key becomes one edge each way holding every column
+    pair. Unsupported or repeated foreign keys are skipped with a warning.
     Returns the number of foreign keys added.
     """
-    added: set[tuple[str, str, str]] = set()
+    added: set[tuple[tuple[str, ...], str, tuple[str, ...]]] = set()
     for foreign_key in table.foreign_keys:
         reason = _skip_reason(table, foreign_key, graph.schema_name)
         key = (
-            foreign_key.column_names[0],
+            foreign_key.column_names,
             foreign_key.referred_table,
-            foreign_key.referred_column_names[0],
+            foreign_key.referred_column_names,
         )
         if reason is None and key in added:
             reason = "an identical foreign key was already added"
         if reason is not None:
             logger.warning("Skipping foreign key %r on %r: %s", key, table.name, reason)
             continue
-        graph.add_foreign_key(table.name, *key, FORWARD_VERB, BACKWARD_VERB)
+        graph.add_composite_foreign_key(table.name, *key, FORWARD_VERB, BACKWARD_VERB)
         added.add(key)
     return len(added)
 

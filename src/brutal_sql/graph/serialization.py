@@ -48,14 +48,15 @@ def _mirror_to_dict(source: MirrorSource | None) -> dict[str, Any] | None:
     }
 
 
-def _edge_to_dict(edge: Edge) -> dict[str, str]:
-    """Return one edge as a plain dict."""
+def _edge_to_dict(edge: Edge) -> dict[str, Any]:
+    """Return one edge as a plain dict; extra pairs of a composite key as lists."""
     return {
         "source_field": edge.source_field,
         "target_table": edge.target_table,
         "target_table_field": edge.target_table_field,
         "verb_label": edge.verb_label,
         "edge_type": edge.edge_type.value,
+        "extra_column_pairs": [list(pair) for pair in edge.extra_column_pairs],
     }
 
 
@@ -99,11 +100,22 @@ def _mirror_from_dict(data: dict[str, Any] | None) -> MirrorSource | None:
     )
 
 
-def _pair_from_list(pair: object) -> tuple[object, ...]:
-    """Return a [mirror, physical] list as a tuple; raise GraphError otherwise."""
+def _pair_from_list(
+    pair: object, field_name: str = "column_mapping"
+) -> tuple[object, ...]:
+    """Return a two-column list as a tuple; raise GraphError otherwise."""
     if not isinstance(pair, list):
-        raise GraphError(f"column_mapping entry must be a list, got {pair!r}")
+        raise GraphError(f"{field_name} entry must be a list, got {pair!r}")
     return tuple(pair)
+
+
+def _extra_pairs_from_list(pairs: object) -> tuple[tuple[object, ...], ...]:
+    """Rebuild an edge's extra column pairs; a missing key (None) means none."""
+    if pairs is None:
+        return ()
+    if not isinstance(pairs, list):
+        raise GraphError(f"extra_column_pairs must be a list, got {pairs!r}")
+    return tuple(_pair_from_list(pair, "extra_column_pairs") for pair in pairs)
 
 
 def _edge_from_dict(data: dict[str, Any]) -> Edge:
@@ -117,6 +129,7 @@ def _edge_from_dict(data: dict[str, Any]) -> Edge:
         data["target_table_field"],
         data["verb_label"],
         edge_type,
+        _extra_pairs_from_list(data.get("extra_column_pairs")),
     )
 
 

@@ -108,7 +108,6 @@ def test_convert_wraps_graph_errors_for_unknown_referred_table() -> None:
     "key, reason",
     [
         (foreign_key(("manager_id",), "employees"), "self join"),
-        (foreign_key(("a", "b"), "customers", ("id", "full_name")), "more than one"),
         (foreign_key(("customer_id",), "customers", schema="crm"), "schema 'crm'"),
     ],
 )

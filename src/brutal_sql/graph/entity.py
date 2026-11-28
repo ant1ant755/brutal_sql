@@ -39,10 +39,12 @@ class EntityAttribute:
 
 @dataclass(frozen=True)
 class Edge:
-    """A directed relationship from a column of one entity to a column of another.
+    """A directed relationship from columns of one entity to columns of another.
 
     A forward edge goes from the table holding the foreign key to the table it
-    references. A backward edge goes the other way.
+    references. A backward edge goes the other way. source_field and
+    target_table_field are the first column pair; a composite foreign key keeps
+    its other pairs, in key order, in extra_column_pairs.
     """
 
     source_field: str
@@ -50,6 +52,7 @@ class Edge:
     target_table_field: str
     verb_label: str
     edge_type: EdgeType
+    extra_column_pairs: tuple[tuple[str, str], ...] = ()
 
     def __post_init__(self) -> None:
         require_text(self.source_field, "source_field")
@@ -58,6 +61,34 @@ class Edge:
         require_text(self.verb_label, "verb_label")
         if not isinstance(self.edge_type, EdgeType):
             raise GraphError(f"edge_type must be an EdgeType, got {self.edge_type!r}")
+        _require_column_pairs(self.extra_column_pairs)
+
+    @property
+    def column_pairs(self) -> tuple[tuple[str, str], ...]:
+        """Every (source column, target column) pair, in foreign key order."""
+        first = (self.source_field, self.target_table_field)
+        return (first, *self.extra_column_pairs)
+
+    @property
+    def source_fields(self) -> tuple[str, ...]:
+        """Every source column, in foreign key order."""
+        return tuple(source for source, _ in self.column_pairs)
+
+    @property
+    def target_fields(self) -> tuple[str, ...]:
+        """Every target column, in foreign key order."""
+        return tuple(target for _, target in self.column_pairs)
+
+
+def _require_column_pairs(pairs: object) -> None:
+    """Raise GraphError unless pairs is a tuple of (source, target) text pairs."""
+    if not isinstance(pairs, tuple):
+        raise GraphError(f"extra_column_pairs must be a tuple, got {pairs!r}")
+    for pair in pairs:
+        if not isinstance(pair, tuple) or len(pair) != 2:
+            raise GraphError(f"column pair must be a (source, target) tuple: {pair!r}")
+        require_text(pair[0], "column pair source")
+        require_text(pair[1], "column pair target")
 
 
 @dataclass
@@ -121,10 +152,11 @@ class EntityNode:
         """Attach an edge that starts at one of this entity's attributes."""
         if not isinstance(edge, Edge):
             raise GraphError(f"not an Edge: {edge!r}")
-        if not self.has_attribute(edge.source_field):
-            raise AttributeNotFoundError(
-                f"entity {self.name!r} has no attribute {edge.source_field!r}"
-            )
+        for source_field in edge.source_fields:
+            if not self.has_attribute(source_field):
+                raise AttributeNotFoundError(
+                    f"entity {self.name!r} has no attribute {source_field!r}"
+                )
         if edge in self.edges:
             raise DuplicateEdgeError(f"entity {self.name!r} already has {edge!r}")
         self.edges.append(edge)
