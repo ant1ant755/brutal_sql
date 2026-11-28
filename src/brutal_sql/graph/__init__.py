@@ -39,6 +39,11 @@ from brutal_sql.graph.serialization import (
     graph_to_dict,
     graph_to_json,
 )
+from brutal_sql.graph.spanning_trees import (
+    ForeignKeyLink,
+    find_spanning_trees,
+    foreign_keys_within,
+)
 
 __all__ = [
     "AnnotationError",
@@ -50,6 +55,7 @@ __all__ = [
     "EdgeType",
     "EntityAttribute",
     "EntityNode",
+    "ForeignKeyLink",
     "Graph",
     "GraphError",
     "JoinStep",
@@ -70,6 +76,8 @@ __all__ = [
     "draft_annotations",
     "find_connected_table_sets",
     "find_ontology_problems",
+    "find_spanning_trees",
+    "foreign_keys_within",
     "graph_from_dict",
     "graph_from_json",
     "graph_to_dict",
